@@ -252,6 +252,7 @@
   box-shadow: var(--shadow-subtle);
   backdrop-filter: blur(20px);
   border: var(--border-subtle);
+  overflow: visible;
 }
 
 .network-selector h3 {
@@ -262,29 +263,48 @@
 
 .network-buttons {
   display: flex;
-  gap: 1rem;
   flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
 }
 
-.btn-network {
-  padding: 0.75rem 1.5rem;
-  border: var(--border-subtle);
-  border-radius: var(--border-radius-md);
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
-  cursor: pointer;
-  transition: var(--transition-normal);
-  font-weight: 600;
+.network-option {
+  min-width: 120px;
+  white-space: nowrap;
 }
 
-.btn-network:hover {
+.network-option.active {
+  background: #06b6d4;
+  color: #03141a;
+}
+
+.network-list {
+  display: flex;
+  flex-wrap: wrap; /* permitir varias filas */
+  gap: 0.5rem;
+  max-height: 220px; /* ajustar según diseño */
+  overflow: auto; /* scroll si excede el área */
+  padding: 0.25rem;
+}
+
+.network-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.9rem;
+  border-radius: 8px;
   background: var(--bg-card);
-  border-color: var(--primary-cyan);
-  transform: translateY(-2px);
+  color: var(--text-primary);
+  border: 1px solid rgba(255,255,255,0.03);
+  cursor: pointer;
+  min-width: 140px;
+  justify-content: flex-start;
 }
 
-.btn-network:active {
-  transform: translateY(0);
+.network-item.active {
+  box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+  border-color: rgba(0,212,255,0.18);
+  background: linear-gradient(90deg, rgba(0,212,255,0.06), rgba(16,185,129,0.03));
 }
 
 /* Filtros */

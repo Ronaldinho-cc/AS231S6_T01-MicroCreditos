@@ -1,12 +1,12 @@
 import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import Swal from 'sweetalert2';
 import { WalletService } from '../../services/wallet.service';
 import { LoanService } from '../../services/loan/loan.service';
 import { ContractService } from '../../services/contract/contract.service';
 import { StudentVerificationService } from '../../services/student-verification.service';
 import { APP_CONSTANTS } from '../../constants/app.constants';
 import { LoanRequest } from '../../interfaces/loan.interface';
-import Swal from 'sweetalert2';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-admin',
@@ -39,6 +39,15 @@ export class AdminComponent implements OnInit {
   showTransactionViewer: boolean = false;
   transactionViewerLoan: LoanRequest | null = null;
 
+  // Declarar redes como constante en el componente (no se debe sobrescribir)
+  networks = [
+    { key: 'holesky', label: 'Holešky', icon: '⛰️' },
+    { key: 'sepolia', label: 'Sepolia', icon: '🔷' },
+    { key: 'goerli', label: 'Goerli', icon: '🌐' },
+    { key: 'hoodi', label: 'Hoodi', icon: '🧪' }
+  ];
+  selectedNetwork: string | null = null;
+
   constructor(
     private walletService: WalletService,
     private loanService: LoanService,
@@ -48,8 +57,73 @@ export class AdminComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.checkAdminAccess();
-    this.loadAllLoans();
+    // Mantener las inicializaciones previas (si existen) y asegurarnos de no sobrescribir networks
+    try {
+      // Llamadas previas del lifecycle
+      (this as any).checkAdminAccess?.();
+      // no llamar loadAllLoans aquí sin antes conocer la red
+    } catch (e) {
+      console.error('Inicialización admin error:', e);
+    }
+
+    // Obtener chainId actual para marcar la red activa en la interfaz
+    this.walletService.getChainId()
+      .then(cid => {
+        // Normalizar hex lowercase
+        if (cid) this.selectedNetwork = this.mapChainIdToKey(cid);
+        console.log('AdminComponent - chainId detectado:', cid, 'selectedNetwork:', this.selectedNetwork);
+        // Cargar préstamos una vez conocida la red actual (aplica filtro)
+        this.loadAllLoans();
+      })
+      .catch(err => {
+        console.debug('No se pudo leer chainId en AdminComponent:', err);
+        // Aun así cargar préstamos sin filtrar por red
+        this.loadAllLoans();
+      });
+
+    // Debug adicional en consola para ver si la lista de redes se mantiene
+    console.log('AdminComponent networks iniciales:', this.networks, 'length:', this.networks.length);
+  }
+
+  // Mapea chainId hex a key usada en networks
+  private mapChainIdToKey(chainIdHex: string | null | undefined): string | null {
+    if (!chainIdHex) return null;
+    const cid = chainIdHex.toLowerCase();
+    switch (cid) {
+      case '0x4268': return 'holesky';
+      case '0xaa36a7': return 'sepolia';
+      case '0x5': return 'goerli';
+      case '0x88c50': return 'hoodi';
+      default: return null;
+    }
+  }
+
+  // Método para cambiar de red desde la UI
+  async changeNetwork(key: string): Promise<void> {
+    try {
+      // Evitar doble click rápido
+      // No pre-asignar la red hasta confirmar el cambio en la wallet:
+      await this.walletService.switchNetwork(key);
+
+      // Actualizar estado local con la nueva red y recargar (filtrado)
+      this.selectedNetwork = key;
+      await this.loadAllLoans();
+
+      Swal.fire({ icon: 'success', title: 'Red cambiada', text: `Se intentó cambiar a ${key}` });
+    } catch (err: any) {
+      console.error('Error al cambiar red:', err);
+      Swal.fire({
+        icon: 'error',
+        title: 'No se pudo cambiar la red',
+        text: err?.message || String(err)
+      });
+      // Recalcular selectedNetwork real si falla
+      try {
+        const cid = await this.walletService.getChainId();
+        this.selectedNetwork = this.mapChainIdToKey(cid);
+        await this.loadAllLoans();
+      } catch (_e) { /* noop */ }
+    }
   }
 
   async checkAdminAccess(): Promise<void> {
@@ -75,7 +149,16 @@ export class AdminComponent implements OnInit {
   async loadAllLoans(): Promise<void> {
     this.isLoading = true;
     try {
-      this.allLoans = await this.loanService.getAllLoans();
+      // Obtener todos los préstamos del servicio
+      const fetched = await this.loanService.getAllLoans();
+
+      // Si hay una red seleccionada, filtrar por esa red
+      if (this.selectedNetwork) {
+        this.allLoans = fetched.filter(l => l.network === this.selectedNetwork);
+      } else {
+        this.allLoans = fetched;
+      }
+
       this.categorizeLoans();
       this.applyFilter();
     } catch (error) {
@@ -231,7 +314,7 @@ export class AdminComponent implements OnInit {
       }
     });
     
-    if (result.isConfirmed && result.value) {
+    if (result.isConfirmed && (result as any).value) {
       // Mostrar ventana de éxito
       await Swal.fire({
         icon: 'success',
@@ -243,10 +326,10 @@ export class AdminComponent implements OnInit {
             </div>
             <p style="font-size: 1.1rem; margin: 1.5rem 0;">El préstamo de <strong style="color: #10b981;">${loan.amount} ETH</strong> ha sido aprobado exitosamente.</p>
             <p style="color: #666; font-size: 0.9rem;">Destinatario: <strong>${loan.borrowerName}</strong></p>
-            ${result.value.transactionHash ? `
+            ${(result as any).value.transactionHash ? `
               <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(0, 212, 255, 0.1); border-radius: 8px; border: 1px solid rgba(0, 212, 255, 0.3);">
                 <p style="font-size: 0.85rem; color: #666; margin-bottom: 0.5rem;">Hash de Transacción:</p>
-                <p style="font-family: monospace; font-size: 0.9rem; word-break: break-all; color: #00d4ff;">${result.value.transactionHash}</p>
+                <p style="font-family: monospace; font-size: 0.9rem; word-break: break-all; color: #00d4ff;">${(result as any).value.transactionHash}</p>
               </div>
             ` : ''}
           </div>
@@ -262,7 +345,7 @@ export class AdminComponent implements OnInit {
       });
       
       await this.loadAllLoans();
-    } else if (result.isDismissed) {
+    } else if ((result as any).isDismissed) {
       console.log('❌ Aprobación cancelada por el administrador');
     }
   }
@@ -432,7 +515,7 @@ export class AdminComponent implements OnInit {
         cancelButton: 'swal-btn swal-btn-cancel',
         input: 'swal-input-textarea'
       },
-      inputValidator: (value) => {
+      inputValidator: (value: string) => {
         if (!value) {
           return 'Debes proporcionar un motivo para rechazar el préstamo';
         }
@@ -443,7 +526,7 @@ export class AdminComponent implements OnInit {
       },
       showLoaderOnConfirm: true,
       allowOutsideClick: false,
-      preConfirm: async (reason) => {
+      preConfirm: async (reason: string) => {
         try {
           const success = await this.loanService.rejectLoan(loan.id, this.account!, reason);
           if (!success) {
@@ -457,7 +540,7 @@ export class AdminComponent implements OnInit {
       }
     });
     
-    if (result.isConfirmed && result.value) {
+    if (result.isConfirmed && (result as any).value) {
       // Mostrar ventana de confirmación de rechazo
       await Swal.fire({
         icon: 'info',
@@ -470,7 +553,7 @@ export class AdminComponent implements OnInit {
             <p style="font-size: 1.1rem; margin: 1.5rem 0;">El préstamo de <strong>${loan.borrowerName}</strong> ha sido rechazado.</p>
             <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(239, 68, 68, 0.1); border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.3); text-align: left;">
               <p style="font-size: 0.85rem; color: #666; margin-bottom: 0.5rem; font-weight: 600;">Motivo del Rechazo:</p>
-              <p style="font-size: 0.95rem; color: var(--text-primary);">${result.value.reason}</p>
+              <p style="font-size: 0.95rem; color: var(--text-primary);">${(result as any).value.reason}</p>
             </div>
             <p style="color: #666; font-size: 0.85rem; margin-top: 1rem;">El solicitante será notificado sobre esta decisión.</p>
           </div>
@@ -527,6 +610,4 @@ export class AdminComponent implements OnInit {
     this.showTransactionViewer = false;
     this.transactionViewerLoan = null;
   }
-
-
 }

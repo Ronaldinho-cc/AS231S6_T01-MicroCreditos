@@ -67,6 +67,10 @@
           <span class="network-icon">⛓️</span>
           <span class="network-name">Sepolia</span>
         </button>
+         <button (click)="switchToNetwork('hoodi')" class="network-option" [class.active]="chainId === '0x88bb0'">
+          <span class="network-icon">⛓️</span>
+          <span class="network-name">Hoodi</span>
+        </button>
       </div>
     </div>
 

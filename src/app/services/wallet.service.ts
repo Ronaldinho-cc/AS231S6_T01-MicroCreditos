@@ -43,6 +43,7 @@ export class WalletService {
       throw new Error('MetaMask no está instalado');
     }
 
+   // ...existing code...
     const networkParams: { [key: string]: any } = {
       'holesky': {
         chainId: '0x4268', // 17000 in hex
@@ -52,8 +53,8 @@ export class WalletService {
           symbol: 'ETH',
           decimals: 18
         },
-        rpcUrls: ['https://holesky.infura.io/v3/'],
-        blockExplorerUrls: ['https://holesky.etherscan.io/']
+        rpcUrls: ['https://holesky.drpc.org'],
+        blockExplorerUrls: ['https://eth-holesky.blockscout.com'] // <-- protocolo agregado
       },
       'sepolia': {
         chainId: '0xaa36a7', // 11155111 in hex
@@ -63,8 +64,8 @@ export class WalletService {
           symbol: 'ETH',
           decimals: 18
         },
-        rpcUrls: ['https://sepolia.infura.io/v3/'],
-        blockExplorerUrls: ['https://sepolia.etherscan.io/']
+        rpcUrls: ['https://sepolia.drpc.org'],
+        blockExplorerUrls: ['https://eth-sepolia.blockscout.com']
       },
       'goerli': {
         chainId: '0x5', // 5 in hex
@@ -74,11 +75,22 @@ export class WalletService {
           symbol: 'ETH',
           decimals: 18
         },
-        rpcUrls: ['https://goerli.infura.io/v3/'],
+        rpcUrls: ['https://rpc.ankr.com/eth_goerli'],
         blockExplorerUrls: ['https://goerli.etherscan.io/']
-      }
+      },
+      'hoodi': {
+        chainId: '0x88bb0', // 560048 in hex
+        chainName: 'Hoodi Test Network',
+        nativeCurrency: {
+          name: 'ETH',
+          symbol: 'ETH',
+          decimals: 18
+        },
+        rpcUrls: ['https://hoodi.drpc.org'],
+        blockExplorerUrls: ['https://hoodi.etherscan.io']
+      },
     };
-
+ // ...existing code...
     try {
       await window.ethereum.request({
         method: 'wallet_switchEthereumChain',

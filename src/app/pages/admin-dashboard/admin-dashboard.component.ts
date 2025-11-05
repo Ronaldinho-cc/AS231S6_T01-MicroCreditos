@@ -34,7 +34,8 @@ export class AdminDashboardComponent implements OnInit {
       '0x5': 'Goerli',
       '0xaa36a7': 'Sepolia',
       '0x4268': 'Holešky',
-      '0x1a4': 'Ephemery'
+      '0x1a4': 'Ephemery',
+      '0x88bb0': 'Hoodi'
     };
     
     return chainIdMap[chainId] || `Chain ID: ${chainId}`;

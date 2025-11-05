@@ -10,7 +10,8 @@ export const APP_CONSTANTS = {
     GOERLI: { name: 'Goerli', value: 'goerli', limit: 3 },
     HOLESKY: { name: 'Holešky', value: 'holesky', limit: 10 },
     SEPOLIA: { name: 'Sepolia', value: 'sepolia', limit: 5 },
-    EPHEMERY: { name: 'Ephemery', value: 'ephemery', limit: 3 }
+    EPHEMERY: { name: 'Ephemery', value: 'ephemery', limit: 3 },
+    HOODI: { name: 'Hoodi', value: 'hoodi', limit: 8 }
   },
   PURPOSE_TYPES: {
     STUDENT: { value: 'student', label: 'Soy Estudiante', interestRate: 0.12 }, // 5% + 7% = 12%
@@ -45,6 +46,7 @@ export const APP_CONSTANTS = {
   NETWORK_LABELS: {
     goerli: 'Goerli',
     holesky: 'Holešky',
+    hoodi: 'Hoodi',
     sepolia: 'Sepolia',
     ephemery: 'Ephemery'
   }
